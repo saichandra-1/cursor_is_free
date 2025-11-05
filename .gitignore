@@ -2,8 +2,6 @@
 *.crx
 *.pem
 
-# Generated icons (keep the HTML generator)
-icons/*.png
 
 # API keys and config
 config.json
