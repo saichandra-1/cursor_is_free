@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const DEFAULT_BIN = '625967';
 
   // Load saved settings
-  chrome.storage.local.get(['customCardBIN', 'customExpiryMonth', 'customExpiryYear', 'customCVV'], function(result) {
+  chrome.storage.local.get(['customCardBIN', 'customExpiryMonth', 'customExpiryYear', 'customCVV', 'authMethod'], function(result) {
     const savedBIN = result.customCardBIN || DEFAULT_BIN;
     cardBINInput.value = savedBIN;
     currentBINDisplay.textContent = savedBIN;
@@ -36,6 +36,14 @@ document.addEventListener('DOMContentLoaded', function() {
       currentCVVDisplay.textContent = result.customCVV;
     } else {
       currentCVVDisplay.textContent = 'Random';
+    }
+    
+    // Load auth method
+    const authMethod = result.authMethod || 'email-code';
+    if (authMethod === 'password') {
+      document.getElementById('authPassword').checked = true;
+    } else {
+      document.getElementById('authEmailCode').checked = true;
     }
   });
 
@@ -79,9 +87,13 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
+    // Get auth method
+    const authMethod = document.querySelector('input[name="authMethod"]:checked').value;
+    
     // Prepare settings object
     const settings = {
-      customCardBIN: binValue
+      customCardBIN: binValue,
+      authMethod: authMethod
     };
     
     if (monthValue && yearValue) {
@@ -120,7 +132,8 @@ document.addEventListener('DOMContentLoaded', function() {
         customCardBIN: DEFAULT_BIN,
         customExpiryMonth: null,
         customExpiryYear: null,
-        customCVV: null
+        customCVV: null,
+        authMethod: 'email-code'
       }, function() {
         currentBINDisplay.textContent = DEFAULT_BIN;
         currentExpiryDisplay.textContent = 'Random';

@@ -11,7 +11,8 @@ let generatedData = {
   email: null,
   emailData: null,
   card: null,
-  otp: null
+  otp: null,
+  password: null
 };
 
 // Prevent multiple injections
@@ -94,38 +95,92 @@ async function startAutomation() {
     await updateStatus('Waiting for password screen...', 'running');
     await waitForPasswordScreen();
     
-    // Step 7: Now look for and click "Continue with email code" button
-    await updateStatus('Looking for email code button...', 'running');
-    await waitAndClickEmailCodeButton();
+    // Step 7: Check auth method setting and handle accordingly
+    await updateStatus('Checking authentication method...', 'running');
+    const authMethod = await getAuthMethod();
     
-    // Step 8: Wait for OTP screen (URL contains 'magic-code')
-    await updateStatus('Waiting for OTP screen...', 'running');
-    await waitForOTPScreen();
-    
-    // Step 9: Wait for OTP input field to appear
-    await updateStatus('Waiting for OTP field...', 'running');
-    await waitForOTPField();
-    
-    await updateStatus('Fetching OTP from email...', 'running');
-    const otp = await fetchOTPFromEmail(email);
-    generatedData.otp = otp;
-    
-    // Step 10: Enter OTP
-    await updateStatus('Entering OTP...', 'running');
-    await fillOTPField(otp);
-    console.log('✅ OTP entered successfully!');
-    
-    await sleep(2000);
-    
-    // Complete - Stop here and guide user
-    console.log('✅ Account creation complete!');
-    console.log('📋 Next steps: Click "Continue with free trial" then use Stripe Only mode');
-    
-    chrome.runtime.sendMessage({ 
-      type: 'automationPaused',
-      nextStep: 'trial'
-    });
-    await updateStatus('Account created! See instructions below', 'success');
+    if (authMethod === 'password') {
+      // Generate and fill password
+      await updateStatus('Generating password...', 'running');
+      const password = generateRandomPassword();
+      generatedData.password = password;
+      
+      // Save password to storage and update UI
+      chrome.storage.local.set({ generatedPassword: password });
+      chrome.runtime.sendMessage({
+        type: 'dataUpdate',
+        password: password
+      });
+      
+      await fillPasswordField(password);
+      
+      await sleep(500);
+      
+      await updateStatus('Clicking continue button...', 'running');
+      await clickPasswordContinueButton();
+      
+      // Step 8: Wait for OTP screen (URL contains 'magic-code')
+      await updateStatus('Waiting for OTP screen...', 'running');
+      await waitForOTPScreen();
+      
+      // Step 9: Wait for OTP input field to appear
+      await updateStatus('Waiting for OTP field...', 'running');
+      await waitForOTPField();
+      
+      await updateStatus('Fetching OTP from email...', 'running');
+      const otp = await fetchOTPFromEmail(email);
+      generatedData.otp = otp;
+      
+      // Step 10: Enter OTP
+      await updateStatus('Entering OTP...', 'running');
+      await fillOTPField(otp);
+      console.log('✅ OTP entered successfully!');
+      
+      await sleep(2000);
+      
+      // Complete - Account created with password
+      console.log('✅ Account created with password!');
+      console.log('📋 Next steps: Click "Continue with free trial" then use Stripe Only mode');
+      
+      chrome.runtime.sendMessage({ 
+        type: 'automationPaused',
+        nextStep: 'trial'
+      });
+      await updateStatus('Account created! See instructions below', 'success');
+    } else {
+      // Use email code method (existing flow)
+      await updateStatus('Looking for email code button...', 'running');
+      await waitAndClickEmailCodeButton();
+      
+      // Step 8: Wait for OTP screen (URL contains 'magic-code')
+      await updateStatus('Waiting for OTP screen...', 'running');
+      await waitForOTPScreen();
+      
+      // Step 9: Wait for OTP input field to appear
+      await updateStatus('Waiting for OTP field...', 'running');
+      await waitForOTPField();
+      
+      await updateStatus('Fetching OTP from email...', 'running');
+      const otp = await fetchOTPFromEmail(email);
+      generatedData.otp = otp;
+      
+      // Step 10: Enter OTP
+      await updateStatus('Entering OTP...', 'running');
+      await fillOTPField(otp);
+      console.log('✅ OTP entered successfully!');
+      
+      await sleep(2000);
+      
+      // Complete - Stop here and guide user
+      console.log('✅ Account creation complete!');
+      console.log('📋 Next steps: Click "Continue with free trial" then use Stripe Only mode');
+      
+      chrome.runtime.sendMessage({ 
+        type: 'automationPaused',
+        nextStep: 'trial'
+      });
+      await updateStatus('Account created! See instructions below', 'success');
+    }
     
   } catch (error) {
     console.error('Automation error:', error);
@@ -146,6 +201,102 @@ function updateStatus(message, status) {
     message: message,
     status: status
   });
+}
+
+// Get authentication method from storage
+function getAuthMethod() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['authMethod'], function(result) {
+      resolve(result.authMethod || 'email-code');
+    });
+  });
+}
+
+// Generate strong random password
+function generateRandomPassword(length = 16) {
+  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+  const numbers = '0123456789';
+  const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+  const allChars = uppercase + lowercase + numbers + symbols;
+  
+  // Ensure at least one character from each category
+  let password = '';
+  password += uppercase[Math.floor(Math.random() * uppercase.length)];
+  password += lowercase[Math.floor(Math.random() * lowercase.length)];
+  password += numbers[Math.floor(Math.random() * numbers.length)];
+  password += symbols[Math.floor(Math.random() * symbols.length)];
+  
+  // Fill the rest randomly
+  for (let i = password.length; i < length; i++) {
+    password += allChars[Math.floor(Math.random() * allChars.length)];
+  }
+  
+  // Shuffle the password
+  return password.split('').sort(() => Math.random() - 0.5).join('');
+}
+
+// Fill password field
+async function fillPasswordField(password) {
+  const passwordSelectors = [
+    'input[type="password"]',
+    'input[name="password"]',
+    'input[name*="password" i]',
+    'input[placeholder*="password" i]',
+    'input[id*="password" i]',
+    'input[autocomplete="new-password"]'
+  ];
+  
+  // Wait for password field to appear (in case page is still loading)
+  await updateStatus('Waiting for password field...', 'running');
+  let passwordField = await waitForElement(passwordSelectors, 10000);
+  
+  if (passwordField) {
+    await updateStatus('Filling password field...', 'running');
+    fillInput(passwordField, password);
+    await sleep(300);
+    
+    // Trigger input events to ensure React detects the change
+    passwordField.dispatchEvent(new Event('input', { bubbles: true }));
+    passwordField.dispatchEvent(new Event('change', { bubbles: true }));
+    passwordField.dispatchEvent(new Event('blur', { bubbles: true }));
+    
+    console.log('✅ Password field filled');
+  } else {
+    throw new Error('Password field not found after waiting');
+  }
+}
+
+// Click continue button on password screen
+async function clickPasswordContinueButton() {
+  // Look for submit button first (most reliable)
+  let button = findElement(['button[type="submit"]']);
+  
+  // If not found, try specific attribute selectors
+  if (!button) {
+    button = findElement([
+      'button[name="intent"][value="sign-up"]',
+      'button[type="submit"][name="intent"]'
+    ]);
+  }
+  
+  // Try text-based search if still not found
+  if (!button) {
+    button = findButtonByText(['continue', 'sign up', 'submit']);
+  }
+  
+  if (button) {
+    await sleep(300);
+    button.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    await sleep(200);
+    button.focus();
+    await sleep(100);
+    button.click();
+    console.log('✅ Continue button clicked');
+    await sleep(500);
+  } else {
+    throw new Error('Continue button not found on password screen');
+  }
 }
 
 // Generate random name

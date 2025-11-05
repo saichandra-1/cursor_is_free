@@ -4,7 +4,7 @@ let currentMode = 'full'; // 'full' or 'stripe'
 
 document.addEventListener('DOMContentLoaded', function() {
   // Load any saved data
-  chrome.storage.local.get(['generatedName', 'generatedEmail', 'generatedCard', 'automationMode'], function(result) {
+  chrome.storage.local.get(['generatedName', 'generatedEmail', 'generatedCard', 'generatedPassword', 'automationMode'], function(result) {
     if (result.generatedName) {
       document.getElementById('nameData').textContent = result.generatedName;
     }
@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (result.generatedCard) {
       document.getElementById('cardData').textContent = result.generatedCard;
+    }
+    if (result.generatedPassword) {
+      document.getElementById('passwordData').textContent = result.generatedPassword;
     }
     if (result.automationMode) {
       currentMode = result.automationMode;
@@ -100,6 +103,9 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       if (request.card) {
         document.getElementById('cardData').textContent = request.card;
+      }
+      if (request.password) {
+        document.getElementById('passwordData').textContent = request.password;
       }
     } else if (request.type === 'emailReceived') {
       // Email received but not showing in UI anymore

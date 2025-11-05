@@ -420,3 +420,42 @@ h1 {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.2);
 }
+
+/* Radio Button Styles */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 10px;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+.radio-option:hover {
+  background-color: rgba(0, 122, 255, 0.05);
+}
+
+.radio-option input[type="radio"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  margin-right: 10px;
+  cursor: pointer;
+  accent-color: #007aff;
+  flex-shrink: 0;
+}
+
+.radio-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: #000000;
+  letter-spacing: -0.2px;
+  flex: 1;
+}

@@ -106,6 +106,33 @@
     <div class="settings-section">
       <div class="section-header">
         <svg class="section-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect x="2" y="6" width="16" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M6 10H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="10" cy="10" r="1.5" fill="currentColor"/>
+        </svg>
+        <div class="section-title">Authentication Method</div>
+      </div>
+      
+      <div class="setting-card">
+        <div class="setting-item">
+          <div class="setting-description">Choose how to authenticate during signup</div>
+          <div class="radio-group" style="margin-top: 12px;">
+            <label class="radio-option">
+              <input type="radio" name="authMethod" value="email-code" id="authEmailCode" checked>
+              <span class="radio-label">Continue with email code</span>
+            </label>
+            <label class="radio-option" style="margin-top: 8px;">
+              <input type="radio" name="authMethod" value="password" id="authPassword">
+              <span class="radio-label">Generate random password</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-header">
+        <svg class="section-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
           <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/>
           <path d="M10 6V10L12.5 12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
